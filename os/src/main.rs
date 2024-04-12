@@ -13,6 +13,8 @@ pub mod batch;
 pub mod lang_items;
 pub mod logging;
 pub mod sbi;
+pub mod syscall;
+pub mod trap;
 
 global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("link_app.S"));
@@ -69,5 +71,8 @@ pub fn rust_main() -> ! {
         ebss as usize,
     );
 
-    sbi:: shutdown()
+    // sbi:: shutdown()
+    trap::init();
+    batch::init();
+    batch::run_next_app();
 }
