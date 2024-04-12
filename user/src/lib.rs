@@ -1,6 +1,10 @@
 #![no_std]
 #![feature(linkage)]
 
+mod syscall;
+
+use syscall::*;
+
 fn clear_bss() {
     extern "C" {
         fn start_bss();
@@ -25,4 +29,12 @@ pub extern "C" fn _start() -> ! {
 #[no_mangle]
 fn main() -> i32 {
     panic!("Cannot find main!");
+}
+
+pub fn write(fd: usize, buf: &[u8]) -> isize {
+    sys_write(fd, buf)
+}
+
+pub fn exit(exit_code: i32) -> isize {
+    sys_exit(exit_code)
 }
