@@ -3,4 +3,13 @@
     .section .data
     .global _num_app
 _num_app:
-    .quad 0
+    .quad 1
+    .quad add_0_start
+    .quad app_0_end
+
+    .section .data
+    .global app_0_start
+    .global app_0_end
+app_0_start:
+    .incbin "../user/build/bin/hello_world.bin"
+app_0_end:
