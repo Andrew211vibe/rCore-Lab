@@ -1,4 +1,5 @@
-
+use crate::{TaskInfo, SignalAction};
+use super::{Stat, TimeVal};
 
 pub const SYSCALL_READ: usize = 63;
 pub const SYSCALL_WRITE: usize = 64;
@@ -12,7 +13,7 @@ pub fn syscall(id: usize, args: [usize; 3]) -> isize {
             inlateout("x10") args[0] => ret,
             in("x11") args[1],
             in("x12") args[2],
-            in("x17") id,
+            in("x17") id
         );
     }
     ret
@@ -26,6 +27,16 @@ pub fn syscall(id: usize, args: [usize; 3]) -> isize {
 /// syscall ID：64
 pub fn sys_write(fd: usize, buffer: &[u8]) -> isize {
     syscall(SYSCALL_WRITE, [fd, buffer.as_ptr() as usize, buffer.len()])
+}
+
+/// 功能：将文件中的数据读入内存缓冲区。
+/// 参数：`fd` 表示待读入文件的文件描述符；
+///      `buf` 表示内存中缓冲区的起始地址；
+///      `len` 表示内存中缓冲区的长度。
+/// 返回值：返回成功写入的长度。
+/// syscall ID：63
+pub fn sys_read(fd: usize, buffer: &mut [u8]) -> isize {
+    syscall(SYSCALL_READ, [fd, buffer.as_mut_ptr() as usize, buffer.len()])
 }
 
 /// 功能：退出应用程序并将返回值告知批处理系统。

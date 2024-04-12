@@ -1,15 +1,18 @@
 #![no_std]
 #![no_main]
 #![feature(panic_info_message)]
+#[macro_use]
+extern crate log;
 
 use core::arch::global_asm;
 use log::*;
 
 #[macro_use]
 mod console;
-mod lang_items;
-mod logging;
-mod sbi;
+pub mod batch;
+pub mod lang_items;
+pub mod logging;
+pub mod sbi;
 
 global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("link_app.S"));
@@ -20,9 +23,14 @@ fn clear_bss() {
         fn sbss();
         fn ebss();
     }
-    (sbss as usize..ebss as usize).for_each(|a| {
-        unsafe { (a as *mut u8).write_volatile(0) }
-    });
+    // (sbss as usize..ebss as usize).for_each(|a| {
+    //     unsafe { (a as *mut u8).write_volatile(0) }
+    // });
+    unsafe {
+        core::slice::from_raw_parts_mut(
+            sbss as usize as *mut u8, ebss as usize - sbss as usize
+        ).fill(0);
+    }
 }
 
 #[no_mangle]

@@ -2,7 +2,7 @@
 #![no_main]
 
 #[macro_use]
-extern use user_lib;
+extern crate user_lib;
 
 #[no_mangle]
 fn main() -> i32 {
