@@ -13,12 +13,12 @@ global_asm!(include_str!("trap.S"));
 
 pub fn init() {
     extern "C" { fn __alltraps(); }
-    unsafe { stevc::write(__alltraps as usize, TrapMode::Direct); }
+    unsafe { stvec::write(__alltraps as usize, TrapMode::Direct); }
 }
 
 #[no_mangle]
 /// handle an interrupt, exception, or system call from user space
-pub fn trap_handler(cs: &mut TrapContext) -> &mut TrapContext {
+pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
     let scause = scause::read(); // get trap cause
     let stval = stval::read(); // get trap value
     match scause.cause() {

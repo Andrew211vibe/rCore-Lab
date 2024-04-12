@@ -13,6 +13,7 @@ pub mod batch;
 pub mod lang_items;
 pub mod logging;
 pub mod sbi;
+pub mod sync;
 pub mod syscall;
 pub mod trap;
 

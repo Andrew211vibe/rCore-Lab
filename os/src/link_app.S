@@ -4,7 +4,7 @@
     .global _num_app
 _num_app:
     .quad 1
-    .quad add_0_start
+    .quad app_0_start
     .quad app_0_end
 
     .section .data

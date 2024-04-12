@@ -1,6 +1,6 @@
 const FD_STDOUT: usize = 1;
 
-pub fn sys_write(fd: usize, buf: *const u8, lne: usize) -> isize {
+pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
     trace!("kernel: sys_write");
     match fd {
         FD_STDOUT => {

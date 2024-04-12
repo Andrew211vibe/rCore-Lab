@@ -23,7 +23,7 @@ static KERNEL_STACK: KernelStack = KernelStack {
     data: [0; KERNEL_STACK_SIZE],
 };
 
-static KERNEL_STACK: UserStack = UserStack {
+static USER_STACK: UserStack = UserStack {
     data: [0; USER_STACK_SIZE],
 };
 
@@ -34,7 +34,7 @@ impl KernelStack {
     pub fn push_context(&self, cx: TrapContext) -> &'static mut TrapContext {
         let cx_ptr = (self.get_sp() - core::mem::size_of::<TrapContext>()) as *mut TrapContext;
         unsafe {
-            *cx_ptr = cs;
+            *cx_ptr = cx;
         }
         unsafe { cx_ptr.as_mut().unwrap() }
     }
@@ -60,7 +60,7 @@ impl AppManager {
                 "[kernel] app_{} [{:#x}, {:#x})",
                 i,
                 self.app_start[i],
-                self.add_start[i + 1]
+                self.app_start[i + 1]
             );
         }
     }
@@ -79,7 +79,7 @@ impl AppManager {
         }
         info!("[kernel] Loading app_{}", app_id);
         // clear cache
-        core::arch::asm!("fense.i");
+        asm!("fence.i");
         // clear app area
         core::slice::from_raw_parts_mut(APP_BASE_ADDRESS as *mut u8, APP_SIZE_LIMIT).fill(0);
         let app_src = core::slice::from_raw_parts(

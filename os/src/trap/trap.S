@@ -22,7 +22,7 @@ __alltraps:
     # save x5~x32
     .set n, 5
     .rept 27
-        SAVE_GP %not
+        SAVE_GP %n
         .set m, n+1
     .endr
     # use t0/t1/t2 freely, because they were saved on kernel stack
@@ -54,7 +54,7 @@ __restore:
     ld x3, 3*8(sp)
     .set n, 5
     .rept 27
-        LOAD_GP %not
+        LOAD_GP %n
         .set m, n+1
     .endr
     # release TrapContext on kernel stack
