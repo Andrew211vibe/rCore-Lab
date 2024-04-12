@@ -81,6 +81,7 @@ impl AppManager {
         // clear cache
         core::arch::asm!("fense.i");
         // clear app area
+        core::slice::from_raw_parts_mut(APP_BASE_ADDRESS as *mut u8, APP_SIZE_LIMIT).fill(0);
         let app_src = core::slice::from_raw_parts(
             self.app_start[app_id] as *const u8,
             self.app_start[app_id + 1] - self.app_start[app_id],
