@@ -31,7 +31,7 @@ pub fn trap_handler(cs: &mut TrapContext) -> &mut TrapContext {
             run_next_app();
         }
         Trap::Exception(Exception::IllegalInstruction) => {
-            println!("[kernel] IllegalInstruction in application, kernel killed it.")
+            println!("[kernel] IllegalInstruction in application, kernel killed it.");
             run_next_app();
         }
         _ => {
