@@ -2,6 +2,7 @@ use crate::sync::UPSafeCell;
 use crate::trap::TrapContext;
 use core::arch::asm;
 use lazy_static::*;
+use crate::sbi::shutdown;
 
 const USER_STACK_SIZE: usize = 4096 * 2;
 const KERNEL_STACK_SIZE: usize = 4096 * 2;
@@ -75,11 +76,10 @@ impl AppManager {
 
     unsafe fn load_app(&self, app_id: usize) {
         if app_id >= self.num_app {
-            panic!("All applications completed!");
+            println!("All applications completed!");
+            shutdown();
         }
         info!("[kernel] Loading app_{}", app_id);
-        // clear cache
-        asm!("fence.i");
         // clear app area
         core::slice::from_raw_parts_mut(APP_BASE_ADDRESS as *mut u8, APP_SIZE_LIMIT).fill(0);
         let app_src = core::slice::from_raw_parts(
@@ -88,6 +88,13 @@ impl AppManager {
         );
         let app_dst = core::slice::from_raw_parts_mut(APP_BASE_ADDRESS as *mut u8, app_src.len());
         app_dst.copy_from_slice(app_src);
+        // Memory fence about fetching the instruction memory
+        // It is guaranteed that a subsequent instruction fetch must
+        // observes all previous writes to the instruction memory.
+        // Therefore, fence.i must be executed after we have loaded
+        // the code of the next app into the instruction memory.
+        // See also: riscv non-priv spec chapter 3, 'Zifencei' extension.
+        asm!("fence.i");
     }
 }
 
@@ -133,7 +140,7 @@ pub fn run_next_app() -> ! {
     // before this wen have to drop local variables related to resources manually
     // and release the resources
     extern "C" {
-        fn __restore(cs_addr: usize);
+        fn __restore(cx_addr: usize);
     }
     unsafe {
         __restore(KERNEL_STACK.push_context(TrapContext::app_init_context(

@@ -33,7 +33,7 @@ _num_app:
     )?;
 
     for i in 0..apps.len() {
-        writeln!(f, r#"    .quad add_{}_start"#, i)?;
+        writeln!(f, r#"    .quad app_{}_start"#, i)?;
     }
 
     writeln!(f, r#"    .quad app_{}_end"#, apps.len() - 1)?;

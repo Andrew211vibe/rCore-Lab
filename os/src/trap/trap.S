@@ -23,7 +23,7 @@ __alltraps:
     .set n, 5
     .rept 27
         SAVE_GP %n
-        .set m, n+1
+        .set n, n+1
     .endr
     # use t0/t1/t2 freely, because they were saved on kernel stack
     csrr t0, sstatus
@@ -55,7 +55,7 @@ __restore:
     .set n, 5
     .rept 27
         LOAD_GP %n
-        .set m, n+1
+        .set n, n+1
     .endr
     # release TrapContext on kernel stack
     addi sp, sp, 34*8
