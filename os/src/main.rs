@@ -82,6 +82,8 @@ fn clear_bss() {
 #[no_mangle]
 pub fn rust_main() -> ! {
     extern "C" {
+        fn stext();
+        fn etext();
         fn sbss();
         fn ebss();
         fn erodata();
@@ -94,6 +96,11 @@ pub fn rust_main() -> ! {
     clear_bss();
     logging::init();
     println!("[kernel] Hello, world!");
+    trace!(
+        "[kernel] .text [{:#x}, {:#x})",
+        stext as usize,
+        etext as usize,
+    );
     debug!(
         "[kernel] .rodata [{:#x}, {:#x})",
         srodata as usize,
@@ -115,7 +122,7 @@ pub fn rust_main() -> ! {
         ebss as usize,
     );
 
-    sbi:: shutdown()
+    sbi::shutdown()
 }
 
 // #[no_mangle]
