@@ -3,22 +3,25 @@
 #![feature(panic_info_message)]
 #[macro_use]
 extern crate log;
+extern crate alloc;
 
 use core::arch::global_asm;
 use log::*;
 
 #[macro_use]
 mod console;
-pub mod batch;
-pub mod loader;
-pub mod task;
+pub mod config;
+mod heap_alloc;
 pub mod lang_items;
+mod loader;
+pub mod task;
 pub mod logging;
 pub mod sbi;
 pub mod sync;
 pub mod syscall;
+pub mod task;
+pub mod timer;
 pub mod trap;
-pub mod config;
 
 global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("link_app.S"));
@@ -39,8 +42,7 @@ fn clear_bss() {
     }
 }
 
-#[no_mangle]
-pub fn rust_main() -> ! {
+fn kernel_log_info() {
     extern "C" {
         fn stext();
         fn etext();
@@ -53,7 +55,6 @@ pub fn rust_main() -> ! {
         fn boot_stack_top();
         fn boot_stack_lower_bound();
     }
-    clear_bss();
     logging::init();
     println!("[kernel] Hello, world!");
     trace!(
@@ -81,9 +82,17 @@ pub fn rust_main() -> ! {
         sbss as usize,
         ebss as usize,
     );
+}
 
-    // sbi:: shutdown()
+#[no_mangle]
+pub fn rust_main() -> ! {
+    clear_bss();
+    kernel_log_info();
+    heap_alloc::init_heap();
     trap::init();
-    batch::init();
-    batch::run_next_app();
+    loader::load_apps();
+    trap::enable_timer_interrupt();
+    timer::set_next_trigger();
+    task::run_first_task();
+    panic!("Unreachable in rust_main!");
 }
