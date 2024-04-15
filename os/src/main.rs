@@ -10,13 +10,15 @@ use log::*;
 #[macro_use]
 mod console;
 pub mod batch;
+pub mod loader;
+pub mod task;
 pub mod lang_items;
 pub mod logging;
 pub mod sbi;
 pub mod sync;
 pub mod syscall;
 pub mod trap;
-pub mod stack_trace;
+pub mod config;
 
 global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("link_app.S"));
