@@ -182,6 +182,25 @@ pub fn yield_() -> isize {
     sys_yield()
 }
 
+pub fn get_time() -> isize {
+    let mut time = TimeVal::new();
+    match sys_get_time(&mut time, 0) {
+        0 => ((time.sec & 0xffff) * 1000 + time.usec / 1000) as isize,
+        _ => -1,
+    }
+}
+
+pub fn sleep(period_ms: usize) {
+    let start = get_time();
+    while get_time() < start + period_ms as isize {
+        sys_yield();
+    }
+}
+
+pub fn task_info(info: &mut TaskInfo) -> isize {
+    sys_task_info(info)
+}
+
 bitflags! {
     pub struct SignalFlags: i32 {
         const SIGDEF = 1; // Default signal handling
