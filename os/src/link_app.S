@@ -3,7 +3,7 @@
     .section .data
     .global _num_app
 _num_app:
-    .quad 7
+    .quad 12
     .quad app_0_start
     .quad app_1_start
     .quad app_2_start
@@ -11,7 +11,12 @@ _num_app:
     .quad app_4_start
     .quad app_5_start
     .quad app_6_start
-    .quad app_6_end
+    .quad app_7_start
+    .quad app_8_start
+    .quad app_9_start
+    .quad app_10_start
+    .quad app_11_start
+    .quad app_11_end
 
     .section .data
     .global app_0_start
@@ -61,3 +66,38 @@ app_5_end:
 app_6_start:
     .incbin "../user/build/bin/power7.bin"
 app_6_end:
+
+    .section .data
+    .global app_7_start
+    .global app_7_end
+app_7_start:
+    .incbin "../user/build/bin/sleep0.bin"
+app_7_end:
+
+    .section .data
+    .global app_8_start
+    .global app_8_end
+app_8_start:
+    .incbin "../user/build/bin/sleep1.bin"
+app_8_end:
+
+    .section .data
+    .global app_9_start
+    .global app_9_end
+app_9_start:
+    .incbin "../user/build/bin/yield0.bin"
+app_9_end:
+
+    .section .data
+    .global app_10_start
+    .global app_10_end
+app_10_start:
+    .incbin "../user/build/bin/yield1.bin"
+app_10_end:
+
+    .section .data
+    .global app_11_start
+    .global app_11_end
+app_11_start:
+    .incbin "../user/build/bin/yield2.bin"
+app_11_end:

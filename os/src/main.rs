@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 #![feature(panic_info_message)]
+#![feature(alloc_error_handler)]
 #[macro_use]
 extern crate log;
 extern crate alloc;
@@ -14,7 +15,6 @@ pub mod config;
 mod heap_alloc;
 pub mod lang_items;
 mod loader;
-pub mod task;
 pub mod logging;
 pub mod sbi;
 pub mod sync;

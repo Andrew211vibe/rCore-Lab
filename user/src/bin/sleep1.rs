@@ -4,9 +4,7 @@
 #[macro_use]
 extern crate user_lib;
 
-use std::thread::sleep;
-
-use user_lib::{get_time, yield_};
+use user_lib::{get_time, sleep};
 
 #[no_mangle]
 fn main() -> i32 {

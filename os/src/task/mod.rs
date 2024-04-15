@@ -52,9 +52,9 @@ lazy_static! {
                     tasks,
                     current_task: 0,
                 })
-            }
+            },
         }
-    }
+    };
 }
 
 impl TaskManager {

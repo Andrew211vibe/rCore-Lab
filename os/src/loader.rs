@@ -81,3 +81,11 @@ pub fn load_apps() {
         dst.copy_from_slice(src);
     }
 }
+
+/// get app info with entry and sp and save `TrapContext` in kernel stack
+pub fn init_app_cx(app_id: usize) -> usize {
+    KERNEL_STACK[app_id].push_context(TrapContext::app_init_context(
+        get_base_i(app_id),
+        USER_STACK[app_id].get_sp()
+    ))
+}
