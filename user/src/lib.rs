@@ -178,6 +178,10 @@ pub fn exit(exit_code: i32) -> ! {
     sys_exit(exit_code);
 }
 
+pub fn yield_() -> isize {
+    sys_yield()
+}
+
 bitflags! {
     pub struct SignalFlags: i32 {
         const SIGDEF = 1; // Default signal handling

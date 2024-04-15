@@ -33,15 +33,18 @@ pub struct TaskManagerInner {
 lazy_static! {
     /// Global variable: TASK_MANAGER
     pub static ref TASK_MANAGER: TaskManager = {
+        // 调用loader子模块提供的get_num_app接口获取链接到内核的应用总数
         let num_app = get_num_app();
         let mut tasks = [TaskControlBlock {
             task_cx: TaskContext::zero_init(),
             task_status: TaskStatus::UnInit,
         }; MAX_APP_NUM];
+        // 依次对每个任务控制块进行初始化，运行状态设置为Ready，并在它的内核栈栈顶压入一些初始化上下文，然后更新它的task_cx
         for (i, task) in tasks.iter_mut().enumerate() {
             task.task_cx = TaskContext::goto_restore(init_app_cx(i));
             task.task_status = TaskStatus::Ready;
         }
+        // 创建TaskManager实例并返回
         TaskManager {
             num_app,
             inner: unsafe {
@@ -81,7 +84,7 @@ impl TaskManager {
     }
 
     /// Change the status of current `Running` task into `Exited`
-    fn make_current_exited(&self) {
+    fn mark_current_exited(&self) {
         let mut inner = self.inner.exclusive_access();
         let current = inner.current_task;
         inner.tasks[current].task_status = TaskStatus::Exited;
@@ -118,4 +121,37 @@ impl TaskManager {
             panic!("All applications completed!");
         }
     }
+}
+
+/// Run the first task in task list
+pub fn run_first_task() {
+    TASK_MANAGER.run_first_task();
+}
+
+/// Switch current `Running` task to the task we have found,
+/// or there is no `Ready` task and we can exit with all applications completed
+pub fn run_next_task() {
+    TASK_MANAGER.run_next_task();
+}
+
+/// Change the status of current `Running` task into `Ready`
+pub fn mark_current_suspended() {
+    TASK_MANAGER.mark_current_suspended();
+}
+
+/// Change the status of current `Running` task into `Exited`
+pub fn mark_current_exited() {
+    TASK_MANAGER.mark_current_exited()
+}
+
+/// Suspend the current `Running` task and run the next task in task list
+pub fn suspend_current_and_run_next() {
+    mark_current_suspended();
+    run_next_task();
+}
+
+/// Exit the current `Running` task and run the next task in task list
+pub fn exit_current_and_run_next() {
+    mark_current_exited();
+    run_next_task();
 }
