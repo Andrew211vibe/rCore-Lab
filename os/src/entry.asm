@@ -5,7 +5,7 @@ _start:
 	call rust_main # 函数调用rust_main
 
 	.section .bss.stack # 栈空间命名
-	.globl boot_stack
+	.globl boot_stack_lower_bound
 boot_stack_lower_bound: # 栈底地址全局符号标识
 	.space 4096 * 16 # 预留了一块大小为4096 * 16字节，也就是64KiB的空间
 	.globl boot_stack_top
