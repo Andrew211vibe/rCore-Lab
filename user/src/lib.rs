@@ -6,7 +6,7 @@
 #[macro_use]
 pub mod console;
 mod lang_items;
-pub mod syscall;
+mod syscall;
 
 extern crate alloc;
 extern crate core;
@@ -199,6 +199,18 @@ pub fn sleep(period_ms: usize) {
 
 pub fn task_info(info: &mut TaskInfo) -> isize {
     sys_task_info(info)
+}
+
+pub fn mmap(start: usize, len: usize, prot: usize) -> isize {
+    sys_mmap(start, len, prot)
+}
+
+pub fn munmap(start: usize, len: usize) -> isize {
+    sys_munmap(start, len)
+}
+
+pub fn sbrk(size: i32) -> isize {
+    sys_sbrk(size)
 }
 
 bitflags! {
