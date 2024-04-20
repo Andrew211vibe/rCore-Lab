@@ -5,8 +5,8 @@ use crate::mm::{
 };
 use crate::trap::{trap_handler, TrapContext};
 
+// #[derive(Copy, Clone)]
 /// The task control block (TCB) of a task
-#[derive(Copy, Clone)]
 pub struct TaskControlBlock {
     /// Maintain the execution status of the current process
     pub task_status: TaskStatus,
@@ -70,7 +70,7 @@ impl TaskControlBlock {
         task_control_block
     }
     /// change the location of the program break. return None if failed
-    pub fn change_program_brk(&self, size: i32) -> Option<usize> {
+    pub fn change_program_brk(&mut self, size: i32) -> Option<usize> {
         let old_break = self.program_brk;
         let new_brk = self.program_brk as isize + size as isize;
         if new_brk < self.heap_bottom as isize {

@@ -1,7 +1,7 @@
 use super::{frame_alloc, FrameTracker, PhysPageNum, StepByOne, VirtAddr, VirtPageNum};
-use alloc::vec::{self, Vec};
+use alloc::vec;
+use alloc::vec::Vec;
 use bitflags::*;
-use riscv::addr::Page;
 
 bitflags! {
     /// page table entry flags

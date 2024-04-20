@@ -1,6 +1,6 @@
 use super::PageTableEntry;
 use crate::config::{PAGE_SIZE, PAGE_SIZE_BITS};
-use core::{fmt::{self, Debug, Formatter}, iter::FromFn};
+use core::fmt::{self, Debug, Formatter};
 
 const PA_WIDTH_SV39: usize = 56;
 const VA_WIDTH_SV39: usize = 39;
@@ -99,7 +99,7 @@ impl VirtAddr {
 impl From<VirtAddr> for VirtPageNum {
     fn from(v: VirtAddr) -> Self {
         assert_eq!(v.page_offset(), 0);
-        floor()
+        v.floor()
     }
 }
 impl From<VirtPageNum> for VirtAddr {
@@ -121,7 +121,7 @@ impl PhysPageNum {
         unsafe { core::slice::from_raw_parts_mut(pa.0 as *mut u8, 4096) }
     }
     /// Get the mutable reference of physical address
-    pub fn get_mut(&self) -> &'static mut T {
+    pub fn get_mut<T>(&self) -> &'static mut T {
         let pa: PhysAddr = (*self).into();
         pa.get_mut()
     }
@@ -177,9 +177,9 @@ impl From<PhysPageNum> for usize {
 impl From<VirtAddr> for usize {
     fn from(value: VirtAddr) -> Self {
         if value.0 >= (1 << (VA_WIDTH_SV39 - 1)) {
-            v.0 | (!((1 << VA_WIDTH_SV39) - 1))
+            value.0 | (!((1 << VA_WIDTH_SV39) - 1))
         } else {
-            v.0
+            value.0
         }
     }
 }

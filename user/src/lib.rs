@@ -16,7 +16,7 @@ extern crate bitflags;
 use alloc::vec::Vec;
 use buddy_system_allocator::LockedHeap;
 pub use console::{flush, STDIN, STDOUT};
-use syscall::*;
+pub use syscall::*;
 
 const USER_HEAP_SIZE: usize = 16384;
 

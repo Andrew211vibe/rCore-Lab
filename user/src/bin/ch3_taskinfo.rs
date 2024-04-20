@@ -5,7 +5,7 @@ extern crate user_lib;
 
 use user_lib::{
     get_time, println, sleep, task_info, TaskInfo, TaskStatus, 
-    syscall::{SYSCALL_EXIT, SYSCALL_GETTIMEOFDAY, SYSCALL_TASK_INFO, SYSCALL_WRITE, SYSCALL_YIELD, },
+    SYSCALL_EXIT, SYSCALL_GETTIMEOFDAY, SYSCALL_TASK_INFO, SYSCALL_WRITE, SYSCALL_YIELD,
 };
 
 #[no_mangle]
