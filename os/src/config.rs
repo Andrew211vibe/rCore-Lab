@@ -1,11 +1,11 @@
 #[allow(unused)]
 
 /// user app's stack size
-pub const USER_STACK_SIZE: usize = 4096;
+pub const USER_STACK_SIZE: usize = 4096 * 2;
 /// kernel stack size
 pub const KERNEL_STACK_SIZE: usize = 4096 * 2;
 /// kernel heap size
-pub const KERNEL_HEAP_SIZE: usize = 0x20000;
+pub const KERNEL_HEAP_SIZE: usize = 0x200_0000;
 
 /// the max number of apps
 // pub const MAX_APP_NUM: usize = 16;
