@@ -94,7 +94,7 @@ impl From<VirtPageNum> for usize {
 impl VirtAddr {
     /// Get the (floor) virtual page number
     pub fn floor(&self) -> VirtPageNum {
-        VirtPageNum(self.0 / PAGE_SIZE_BITS)
+        VirtPageNum(self.0 / PAGE_SIZE)
     }
     /// Get the (ceil) virtual page number
     pub fn ceil(&self) -> VirtPageNum {
