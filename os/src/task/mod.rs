@@ -3,11 +3,10 @@ mod switch;
 #[allow(clippy::module_inception)]
 mod task;
 
-use crate::config::MAX_APP_NUM;
-use crate::loader::{get_num_app, init_app_cx};
+use crate::loader::{get_num_app, get_app_data};
 use crate::sync::UPSafeCell;
-use crate::syscall;
-use crate::syscall::process::TaskInfo;
+use crate::trap::TrapContext;
+use alloc::vec::Vec;
 use lazy_static::*;
 use switch::__switch;
 pub use task::{TaskControlBlock, TaskStatus};
@@ -40,18 +39,24 @@ pub struct TaskManagerInner {
 lazy_static! {
     /// Global variable: TASK_MANAGER
     pub static ref TASK_MANAGER: TaskManager = {
+        println!("init TASK_MANAGER");
         // 调用loader子模块提供的get_num_app接口获取链接到内核的应用总数
         let num_app = get_num_app();
-        let mut tasks = [TaskControlBlock {
-            task_cx: TaskContext::zero_init(),
-            // task_status: TaskStatus::UnInit,
-            task_info: TaskInfo::new(),
-        }; MAX_APP_NUM];
+        println!("num_app = {}", num_app);
+        // let mut tasks = [TaskControlBlock {
+        //     task_cx: TaskContext::zero_init(),
+        //     // task_status: TaskStatus::UnInit,
+        //     task_info: TaskInfo::new(),
+        // }; MAX_APP_NUM];
+        let mut tasks: Vec<TaskControlBlock> = Vec::new();
         // 依次对每个任务控制块进行初始化，运行状态设置为Ready，并在它的内核栈栈顶压入一些初始化上下文，然后更新它的task_cx
-        for (i, task) in tasks.iter_mut().enumerate() {
-            task.task_cx = TaskContext::goto_restore(init_app_cx(i));
-            // task.task_status = TaskStatus::Ready;
-            task.task_info.status = TaskStatus::Ready;
+        // for (i, task) in tasks.iter_mut().enumerate() {
+        //     task.task_cx = TaskContext::goto_restore(init_app_cx(i));
+        //     // task.task_status = TaskStatus::Ready;
+        //     task.task_info.status = TaskStatus::Ready;
+        // }
+        for i in 0..num_app {
+            tasks.push(TaskControlBlock::new(get_app_data(i), i));
         }
         // 创建TaskManager实例并返回
         TaskManager {
@@ -75,13 +80,13 @@ impl TaskManager {
         let mut inner = self.inner.exclusive_access();
         let task0 = &mut inner.tasks[0];
         // task0.task_status = TaskStatus::Running;
-        task0.task_info.status = TaskStatus::Ready;
+        task0.task_status = TaskStatus::Running;
         let next_task_cx_ptr = &task0.task_cx as *const TaskContext;
         drop(inner);
         let mut _unused = TaskContext::zero_init();
         // before this, we should drop local variables that must be droppped manually
         unsafe {
-            __switch(&mut _unused as *mut TaskContext, next_task_cx_ptr);
+            __switch(&mut _unused as *mut _, next_task_cx_ptr);
         }
         panic!("unreachable in run_first_task!");
     }
@@ -91,7 +96,7 @@ impl TaskManager {
         let mut inner = self.inner.exclusive_access();
         let current = inner.current_task;
         // inner.tasks[current].task_status = TaskStatus::Ready;
-        inner.tasks[current].task_info.status = TaskStatus::Ready;
+        inner.tasks[current].task_status = TaskStatus::Ready;
     }
 
     /// Change the status of current `Running` task into `Exited`
@@ -99,7 +104,7 @@ impl TaskManager {
         let mut inner = self.inner.exclusive_access();
         let current = inner.current_task;
         // inner.tasks[current].task_status = TaskStatus::Exited;
-        inner.tasks[current].task_info.status = TaskStatus::Exited;
+        inner.tasks[current].task_status = TaskStatus::Exited;
     }
 
     /// Find next task to run and return task id
@@ -113,7 +118,7 @@ impl TaskManager {
         //     .find(|id| inner.tasks[*id].task_status == TaskStatus::Ready)
         (current + 1..current + self.num_app + 1)
             .map(|id| id % self.num_app)
-            .find(|id| inner.tasks[*id].task_info.status == TaskStatus::Ready)
+            .find(|id| inner.tasks[*id].task_status == TaskStatus::Ready)
     }
 
     /// Switch current `Running` task to the task we have found,
@@ -123,7 +128,7 @@ impl TaskManager {
             let mut inner = self.inner.exclusive_access();
             let current = inner.current_task;
             // inner.tasks[next].task_status = TaskStatus::Running;
-            inner.tasks[next].task_info.status = TaskStatus::Running;
+            inner.tasks[next].task_status = TaskStatus::Running;
             inner.current_task = next;
             let current_task_cx_ptr = &mut inner.tasks[current].task_cx as *mut TaskContext;
             let next_task_cx_ptr = &inner.tasks[next].task_cx as *const TaskContext;
@@ -138,16 +143,23 @@ impl TaskManager {
         }
     }
 
-    fn update_syscall_times(&self, syscall_id: usize) {
-        let mut inner = self.inner.exclusive_access();
-        let current = inner.current_task;
-        inner.tasks[current].task_info.update_syscall_times(syscall_id);
+    /// Get the current 'Running' task's token.
+    fn get_current_token(&self) -> usize {
+        let inner = self.inner.exclusive_access();
+        inner.tasks[inner.current_task].get_user_token()
     }
-    
-    fn get_current_task_info(&self) -> TaskInfo {
+
+    /// Get the current 'Running' task's trap contexts.
+    fn get_current_trap_cx(&self) -> &'static mut TrapContext {
+        let inner = self.inner.exclusive_access();
+        inner.tasks[inner.current_task].get_trap_cx()
+    }
+
+    /// Change the current 'Running' task's program break
+    fn change_current_program_brk(&self, size: i32) -> Option<usize> {
         let mut inner = self.inner.exclusive_access();
-        let current = inner.current_task;
-        inner.tasks[current].task_info
+        let cur = inner.current_task;
+        inner.tasks[cur].change_program_brk(size)
     }
 }
 
@@ -184,10 +196,17 @@ pub fn exit_current_and_run_next() {
     run_next_task();
 }
 
-pub fn update_syscall_times(syscall_id: usize) {
-    TASK_MANAGER.update_syscall_times(syscall_id);
+/// Get the current 'Running' task's token.
+pub fn current_user_token() -> usize {
+    TASK_MANAGER.get_current_token()
 }
 
-pub fn get_current_task_info() -> TaskInfo {
-    TASK_MANAGER.get_current_task_info()
+/// Get the current 'Running' task's trap contexts.
+pub fn current_trap_cx() -> &'static mut TrapContext {
+    TASK_MANAGER.get_current_trap_cx()
+}
+
+/// Change the current 'Running' task's program break
+pub fn change_program_brk(size: i32) -> Option<usize> {
+    TASK_MANAGER.change_current_program_brk(size)
 }

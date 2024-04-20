@@ -2,6 +2,9 @@
 #![no_main]
 #![feature(panic_info_message)]
 #![feature(alloc_error_handler)]
+
+#[macro_use]
+extern crate bitflags;
 #[macro_use]
 extern crate log;
 extern crate alloc;
@@ -12,10 +15,10 @@ use log::*;
 #[macro_use]
 mod console;
 pub mod config;
-mod heap_alloc;
 pub mod lang_items;
 mod loader;
 pub mod logging;
+pub mod mm;
 pub mod sbi;
 pub mod sync;
 pub mod syscall;
@@ -88,9 +91,12 @@ fn kernel_log_info() {
 pub fn rust_main() -> ! {
     clear_bss();
     kernel_log_info();
-    heap_alloc::init_heap();
+    // heap_alloc::init_heap();
+    mm::init();
+    println!("[kernel] back to world!");
+    mm::remap_test();
     trap::init();
-    loader::load_apps();
+    // loader::load_apps();
     trap::enable_timer_interrupt();
     timer::set_next_trigger();
     task::run_first_task();

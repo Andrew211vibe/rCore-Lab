@@ -11,7 +11,7 @@ static TARGET_PATH: &str = "../user/build/bin/";
 
 fn insert_app_data() -> Result<()> {
     let mut f = File::create("src/link_app.S").unwrap();
-    let mut apps: Vec<_> = read_dir("../user/build/bin/")
+    let mut apps: Vec<_> = read_dir("../user/build/elf/")
         .unwrap()
         .into_iter()
         .map(|dir_entry| {
@@ -46,8 +46,9 @@ _num_app:
     .section .data
     .global app_{0}_start
     .global app_{0}_end
+    .align 3
 app_{0}_start:
-    .incbin "{2}{1}.bin"
+    .incbin "{2}{1}.elf"
 app_{0}_end:"#,
             idx, app, TARGET_PATH
         )?;
