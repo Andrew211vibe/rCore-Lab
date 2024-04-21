@@ -394,5 +394,5 @@ pub fn remap_test() {
         .translate(mid_data.floor())
         .unwrap()
         .executable(),);
-    // println!("remap_test passed!");
+    println!("remap_test passed!");
 }
