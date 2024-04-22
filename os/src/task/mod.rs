@@ -4,7 +4,9 @@ mod switch;
 mod task;
 
 use crate::loader::{get_num_app, get_app_data};
+use crate::mm::{MapPermission, PhysPageNum, VPNRange, VirtAddr, VirtPageNum};
 use crate::sync::UPSafeCell;
+use crate::syscall::process::TaskInfo;
 use crate::trap::TrapContext;
 use alloc::vec::Vec;
 use lazy_static::*;
@@ -80,8 +82,7 @@ impl TaskManager {
     fn run_first_task(&self) -> ! {
         let mut inner = self.inner.exclusive_access();
         let task0 = &mut inner.tasks[0];
-        // task0.task_status = TaskStatus::Running;
-        task0.task_status = TaskStatus::Running;
+        task0.task_info.status = TaskStatus::Running;
         let next_task_cx_ptr = &task0.task_cx as *const TaskContext;
         drop(inner);
         let mut _unused = TaskContext::zero_init();
@@ -96,8 +97,7 @@ impl TaskManager {
     fn mark_current_suspended(&self) {
         let mut inner = self.inner.exclusive_access();
         let current = inner.current_task;
-        // inner.tasks[current].task_status = TaskStatus::Ready;
-        inner.tasks[current].task_status = TaskStatus::Ready;
+        inner.tasks[current].task_info.status = TaskStatus::Ready;
     }
 
     /// Change the status of current `Running` task into `Exited`
@@ -105,7 +105,7 @@ impl TaskManager {
         let mut inner = self.inner.exclusive_access();
         let current = inner.current_task;
         // inner.tasks[current].task_status = TaskStatus::Exited;
-        inner.tasks[current].task_status = TaskStatus::Exited;
+        inner.tasks[current].task_info.status = TaskStatus::Exited;
     }
 
     /// Find next task to run and return task id
@@ -114,12 +114,9 @@ impl TaskManager {
     fn find_next_task(&self) -> Option<usize> {
         let inner = self.inner.exclusive_access();
         let current = inner.current_task;
-        // (current + 1..current + self.num_app + 1)
-        //     .map(|id| id % self.num_app)
-        //     .find(|id| inner.tasks[*id].task_status == TaskStatus::Ready)
         (current + 1..current + self.num_app + 1)
             .map(|id| id % self.num_app)
-            .find(|id| inner.tasks[*id].task_status == TaskStatus::Ready)
+            .find(|id| inner.tasks[*id].task_info.status == TaskStatus::Ready)
     }
 
     /// Switch current `Running` task to the task we have found,
@@ -129,7 +126,7 @@ impl TaskManager {
             let mut inner = self.inner.exclusive_access();
             let current = inner.current_task;
             // inner.tasks[next].task_status = TaskStatus::Running;
-            inner.tasks[next].task_status = TaskStatus::Running;
+            inner.tasks[next].task_info.status = TaskStatus::Running;
             inner.current_task = next;
             let current_task_cx_ptr = &mut inner.tasks[current].task_cx as *mut TaskContext;
             let next_task_cx_ptr = &inner.tasks[next].task_cx as *const TaskContext;
@@ -161,6 +158,71 @@ impl TaskManager {
         let mut inner = self.inner.exclusive_access();
         let cur = inner.current_task;
         inner.tasks[cur].change_program_brk(size)
+    }
+
+    /// Get the current 'Running' task's ppn by giving vpn
+    fn get_current_ppn_by_vpn(&self, vpn: VirtPageNum) -> Option<PhysPageNum> {
+        let inner = self.inner.exclusive_access();
+        inner.tasks[inner.current_task].memory_set.translate(vpn.into()).map(|entry| entry.ppn())
+    }
+
+    /// Get the current 'Running' task's info
+    fn get_current_task_info(&self) -> TaskInfo {
+        let inner = self.inner.exclusive_access();
+        let cur = inner.current_task;
+        inner.tasks[cur].task_info
+    }
+
+    /// Update the current 'Running' task's system call times
+    fn update_syscall_times(&self, syscall_id: usize) {
+        let mut inner = self.inner.exclusive_access();
+        let cur = inner.current_task;
+        inner.tasks[cur].task_info.update_syscall_times(syscall_id);
+    }
+
+    /// Map the current 'Running' task's memory set
+    fn map_task_memory(&self, start_va: VirtAddr, end_va: VirtAddr, port: usize) -> isize {
+        let mut inner = self.inner.exclusive_access();
+        let cur = inner.current_task;
+        let vpn_range = VPNRange::new(
+            VirtPageNum::from(start_va), 
+            end_va.ceil()
+        );
+
+        for vpn in vpn_range {
+            if let Some(pte) = inner.tasks[cur].memory_set.translate(vpn) {
+                if pte.is_valid() {
+                    println!("MMAP: {:?} point to an valid page", vpn);
+                    return -1
+                }
+            }
+        }
+
+        let perm = MapPermission::from_bits((port as u8) << 1).unwrap() | MapPermission::U;
+        inner.tasks[cur].memory_set.insert_framed_area(start_va, end_va, perm);
+        0
+    }
+
+    /// Unmap the current 'Running' task's memory set
+    fn unmap_task_memory(&self, start_va: VirtAddr, end_va: VirtAddr) -> isize {
+        let mut inner = self.inner.exclusive_access();
+        let cur = inner.current_task;
+        let vpn_range = VPNRange::new(
+            VirtPageNum::from(start_va), 
+            end_va.ceil()
+        );
+
+        for vpn in vpn_range {
+            if let Some(pte) = inner.tasks[cur].memory_set.translate(vpn) {
+                if !pte.is_valid() {
+                    println!("MUNMAP: {:?} point to an invalid page", vpn);
+                    return -1
+                }
+            }
+        }
+
+        inner.tasks[cur].memory_set.delete_framed_area(vpn_range);
+        0
     }
 }
 
@@ -210,4 +272,45 @@ pub fn current_trap_cx() -> &'static mut TrapContext {
 /// Change the current 'Running' task's program break
 pub fn change_program_brk(size: i32) -> Option<usize> {
     TASK_MANAGER.change_current_program_brk(size)
+}
+
+/// Get the current 'Running' task's ppn by vpn
+pub fn ppn_by_vpn(vpn: VirtPageNum) -> Option<PhysPageNum> {
+    TASK_MANAGER.get_current_ppn_by_vpn(vpn)
+}
+
+/// Get the current 'Running' task's info
+pub fn current_task_info() -> TaskInfo {
+    TASK_MANAGER.get_current_task_info()
+}
+
+/// Update the current 'Running' task's system call times
+pub fn update_syscall(syscall_id: usize) {
+    TASK_MANAGER.update_syscall_times(syscall_id);
+}
+
+/// Map the current 'Running' task's memory set
+pub fn task_mmap(start: usize, len: usize, port: usize) -> isize {
+    let start_va = VirtAddr::from(start);
+    if !start_va.aligned() {
+        println!("Expect the start address to be aligned by page size, but {:#x}", start);
+        return -1
+    }
+    if port > 0b1000 || port == 0 {
+        println!("Invalid mmap permission flag: {:#b}", port);
+        return -1
+    }
+    let end_va = VirtAddr::from(start + len);
+    TASK_MANAGER.map_task_memory(start_va, end_va, port)
+}
+
+/// Unmap the current 'Running' task's memory set
+pub fn task_munmap(start: usize, len: usize) -> isize {
+    let start_va = VirtAddr::from(start);
+    if !start_va.aligned() {
+        println!("Expect the start address to be aligned by page size, but {:#x}", start);
+        return -1
+    }
+    let end_va = VirtAddr::from(start + len);
+    TASK_MANAGER.unmap_task_memory(start_va, end_va)
 }

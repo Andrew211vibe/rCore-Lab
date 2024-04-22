@@ -185,6 +185,22 @@ impl MemorySet {
         self.areas.push(map_area);
     }
 
+    pub fn delete_framed_area(
+        &mut self,
+        range: VPNRange,
+    ) {
+        let mut idx = 0;
+        for area in self.areas.iter_mut() {
+            idx += 1;
+            if area.vpn_range.get_start().0 == range.get_start().0
+            && area.vpn_range.get_end().0 == range.get_end().0 {
+                area.unmap(&mut self.page_table);
+                self.areas.remove(idx);
+                break;
+            }
+        }
+    }
+
     /// Mention that tranpoline is not collected by areas
     fn map_trampoline(&mut self) {
         self.page_table.map(

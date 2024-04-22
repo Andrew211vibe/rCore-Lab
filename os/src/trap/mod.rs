@@ -98,7 +98,7 @@ pub fn trap_return() -> ! {
         fn __restore();
     }
     let restore_va = __restore as usize - __alltraps as usize + TRAMPOLINE;
-    trace!("[kernel] trap_return: ..efore return");
+    trace!("[kernel] trap_return: ..before return");
     unsafe {
         asm!(
             "fence.i",

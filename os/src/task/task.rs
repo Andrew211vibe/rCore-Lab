@@ -1,15 +1,17 @@
 use super::TaskContext;
 use crate::config::TRAP_CONTEXT_BASE;
 use crate::mm::{
-    kernel_stack_position, MapPermission, MemorySet, PhysPageNum, VirtAddr, KERNEL_SPACE,
+    kernel_stack_position, MapPermission, MemorySet, PhysPageNum, VirtAddr, KERNEL_SPACE
 };
 use crate::trap::{trap_handler, TrapContext};
+use crate::syscall::process::TaskInfo;
 
 // #[derive(Copy, Clone)]
 /// The task control block (TCB) of a task
 pub struct TaskControlBlock {
     /// Maintain the execution status of the current process
-    pub task_status: TaskStatus,
+    // pub task_status: TaskStatus,
+    pub task_info: TaskInfo,
     /// Save task context
     pub task_cx: TaskContext,
     /// Application address space
@@ -49,8 +51,9 @@ impl TaskControlBlock {
             kernel_stack_top.into(), 
             MapPermission::R | MapPermission::W,
         );
+        let task_info = TaskInfo::new_with_status(task_status);
         let task_control_block = Self {
-            task_status,
+            task_info,
             task_cx: TaskContext::goto_trap_return(kernel_stack_top),
             memory_set,
             trap_cx_ppn,
