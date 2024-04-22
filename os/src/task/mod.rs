@@ -192,7 +192,7 @@ impl TaskManager {
         for vpn in vpn_range {
             if let Some(pte) = inner.tasks[cur].memory_set.translate(vpn) {
                 if pte.is_valid() {
-                    println!("MMAP: {:?} point to an valid page", vpn);
+                    error!("[kernel] MMAP: {:?} point to an valid page", vpn);
                     return -1
                 }
             }
@@ -215,7 +215,7 @@ impl TaskManager {
         for vpn in vpn_range {
             if let Some(pte) = inner.tasks[cur].memory_set.translate(vpn) {
                 if !pte.is_valid() {
-                    println!("MUNMAP: {:?} point to an invalid page", vpn);
+                    error!("[kernel] MUNMAP: {:?} point to an invalid page", vpn);
                     return -1
                 }
             }
@@ -293,11 +293,11 @@ pub fn update_syscall(syscall_id: usize) {
 pub fn task_mmap(start: usize, len: usize, port: usize) -> isize {
     let start_va = VirtAddr::from(start);
     if !start_va.aligned() {
-        println!("Expect the start address to be aligned by page size, but {:#x}", start);
+        error!("Expect the start address to be aligned by page size, but {:#x}", start);
         return -1
     }
     if port > 0b1000 || port == 0 {
-        println!("Invalid mmap permission flag: {:#b}", port);
+        error!("Invalid mmap permission flag: {:#b}", port);
         return -1
     }
     let end_va = VirtAddr::from(start + len);
@@ -308,7 +308,7 @@ pub fn task_mmap(start: usize, len: usize, port: usize) -> isize {
 pub fn task_munmap(start: usize, len: usize) -> isize {
     let start_va = VirtAddr::from(start);
     if !start_va.aligned() {
-        println!("Expect the start address to be aligned by page size, but {:#x}", start);
+        error!("Expect the start address to be aligned by page size, but {:#x}", start);
         return -1
     }
     let end_va = VirtAddr::from(start + len);
