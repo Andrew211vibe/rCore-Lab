@@ -1,4 +1,7 @@
 mod context;
+mod id;
+mod manager;
+mod processor;
 mod switch;
 #[allow(clippy::module_inception)]
 mod task;
@@ -13,6 +16,12 @@ use lazy_static::*;
 use switch::__switch;
 pub use task::{TaskControlBlock, TaskStatus};
 pub use context::TaskContext;
+pub use id::{kstack_alloc, pid_alloc, KernelStack, PidHandle};
+pub use manager::{add_task, fetch_task, TaskManager};
+pub use processor::{
+    current_task, current_trap_cx, current_user_token, run_tasks, schedule, take_current_task,
+    Processor,
+};
 
 /// The task manager, where all the tasks are managed
 /// 

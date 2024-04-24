@@ -54,6 +54,14 @@ impl MapArea {
             map_perm,
         }
     }
+    pub fn from_another(another: &Self) -> Self {
+        Self {
+            vpn_range: VPNRange::new(another.vpn_range.get_start(), another.vpn_range.get_end()),
+            data_frames: BTreeMap::new(),
+            map_type: another.map_type,
+            map_perm: another.map_perm,
+        }
+    }
     pub fn map_one(&mut self, page_table: &mut PageTable, vpn: VirtPageNum) {
         let ppn: PhysPageNum;
         match self.map_type {
@@ -176,7 +184,20 @@ impl MemorySet {
             None,
         );
     }
-
+    /// Remove a area
+    pub fn remove_area_with_start_vpn(&mut self, start_vpn: VirtPageNum) {
+        if let Some((idx, area)) = self
+            .areas
+            .iter_mut()
+            .enumerate()
+            .find(|(_, area)| area.vpn_range.get_start() == start_vpn)
+        {
+            area.unmap(&mut self.page_table);
+            self.areas.remove(idx);
+        }
+    }
+    /// Add a new MapArea into this MemorySet
+    /// Assuming that there are no conflicts in the virtual address space.
     fn push(&mut self, mut map_area: MapArea, data: Option<&[u8]>) {
         map_area.map(&mut self.page_table);
         if let Some(data) = data {
@@ -344,6 +365,26 @@ impl MemorySet {
             elf.header.pt2.entry_point() as usize,
         )
     }
+    /// Create a new address space by copy code&data from a existed process's address space.
+    pub fn from_existed_user(user_space: &Self) -> Self {
+        let mut memory_set = Self::new_bare();
+        // map trampoline
+        memory_set.map_trampoline();
+        // copy data sections/trap_context/user_stack
+        for area in user_space.areas.iter() {
+            let new_area = MapArea::from_another(area);
+            memory_set.push(new_area, None);
+            // copy data from another space
+            for vpn in area.vpn_range {
+                let src_ppn = user_space.translate(vpn).unwrap().ppn();
+                let dst_ppn = memory_set.translate(vpn).unwrap().ppn();
+                dst_ppn
+                    .get_byte_array()
+                    .copy_from_slice(&src_ppn.get_byte_array());
+            }
+        }
+        memory_set
+    }
     /// Change page table by writing satp CSR register
     pub fn activate(&self) {
         let satp = self.page_table.token();
@@ -354,6 +395,11 @@ impl MemorySet {
     }
     pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
         self.page_table.translate(vpn)
+    }
+
+    ///Remove all `MapArea`
+    pub fn recycle_data_pages(&mut self) {
+        self.areas.clear();
     }
     /// shrink the area to new_end
     #[allow(unused)]

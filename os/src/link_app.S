@@ -15,6 +15,18 @@ _num_app:
     .quad app_8_start
     .quad app_8_end
 
+    .global _app_names
+_app_names:
+    .string "ch3_sleep0"
+    .string "ch3_sleep1"
+    .string "ch3_taskinfo"
+    .string "ch4_mmap0"
+    .string "ch4_mmap1"
+    .string "ch4_mmap2"
+    .string "ch4_mmap3"
+    .string "ch4_unmap"
+    .string "ch4_unmap2"
+
     .section .data
     .global app_0_start
     .global app_0_end
