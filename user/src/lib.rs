@@ -234,6 +234,10 @@ pub fn wait(exit_code: &mut i32) -> isize {
     }
 }
 
+pub fn set_priority(prio: isize) -> isize {
+    sys_set_priority(prio)
+}
+
 pub fn waitpid(pid: usize, exit_code: &mut i32) -> isize {
     loop {
         match sys_waitpid(pid as isize, exit_code as *mut _) {
@@ -245,6 +249,10 @@ pub fn waitpid(pid: usize, exit_code: &mut i32) -> isize {
             }
         }
     }
+}
+
+pub fn spawn(path: &str) -> isize {
+    sys_spawn(path)
 }
 
 bitflags! {
