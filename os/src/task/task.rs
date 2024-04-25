@@ -40,7 +40,7 @@ pub struct TaskControlBlockInner {
     pub base_size: usize,
     /// Save task context
     pub task_cx: TaskContext,
-    /// Maintain the execution status of the current  process
+    /// Maintain the execution status of the current process
     pub task_status: TaskStatus,
     /// Application address space
     pub memory_set: MemorySet,
