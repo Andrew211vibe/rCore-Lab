@@ -9,7 +9,7 @@ use crate::{
         ppn_by_vpn, current_task_info, task_mmap, task_munmap, 
         TaskStatus,
     },
-    timer::{get_time_ms, get_time_us},
+    timer::get_time_us,
 };
 
 #[repr(C)]
@@ -225,7 +225,19 @@ pub fn sys_spawn(_path: *const u8) -> isize {
         "kernel:pid[{}] sys_spawn NOT IMPLEMENTED",
         current_task().unwrap().pid.0
     );
-    -1
+    let token = current_user_token();
+    let path = translated_str(token, _path);
+    if let Some(data) = get_app_data_by_name(path.as_str()) {
+        let current_task = current_task().unwrap();
+        let new_task = current_task.spawn(data);
+        let new_pid = new_task.getpid();
+        let trap_cx = new_task.inner_exclusive_access().get_trap_cx();
+        trap_cx.x[10] = 0;
+        add_task(new_task);
+        new_pid as isize
+    } else {
+        -1
+    }
 }
 
 // YOUR JOB: Set task priority.
@@ -234,7 +246,11 @@ pub fn sys_set_priority(_prio: isize) -> isize {
         "kernel:pid[{}] sys_set_priority NOT IMPLEMENTED",
         current_task().unwrap().pid.0
     );
-    -1
+    if _prio < 2 {
+        return -1
+    }
+    current_task().unwrap().inner_exclusive_access().set_prio(_prio as usize);
+    _prio
 }
 
 /// change data segment size

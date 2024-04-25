@@ -118,6 +118,10 @@ pub fn sys_waitpid(pid: isize, xstatus: *mut i32) -> isize {
     syscall(SYSCALL_WAITPID, [pid as usize, xstatus as usize, 0])
 }
 
+// 设置当前进程优先级为 prio
+// 参数：prio 进程优先级，要求 prio >= 2
+// 返回值：如果输入合法则返回 prio，否则返回 -1
+// syscall ID：140
 pub fn sys_set_priority(prio: isize) -> isize {
     syscall(SYSCALL_SET_PRIORITY, [prio as usize, 0, 0])
 }
