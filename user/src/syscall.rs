@@ -112,6 +112,6 @@ pub fn sys_exec(path: &str, args: &[*const u8]) -> isize {
 /// 返回值：如果要等待的子进程不存在则返回 -1；否则如果要等待的子进程均未结束则返回 -2；
 /// 否则返回结束的子进程的进程 ID。
 /// syscall ID：260
-pub fn sys_waitpid(pid: usize, xstatus: *mut i32) -> isize {
+pub fn sys_waitpid(pid: isize, xstatus: *mut i32) -> isize {
     syscall(SYSCALL_WAITPID, [pid as usize, xstatus as usize, 0])
 }

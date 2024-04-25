@@ -4,7 +4,7 @@ use crate::config::TRAP_CONTEXT_BASE;
 use crate::mm::{MemorySet, PhysPageNum, VirtAddr, KERNEL_SPACE};
 use crate::sync::UPSafeCell;
 use crate::trap::{trap_handler, TrapContext};
-use alloc::sync::{Arc, Wrak};
+use alloc::sync::{Arc, Weak};
 use alloc::vec::Vec;
 use core::cell::RefMut;
 
@@ -46,7 +46,7 @@ pub struct TaskControlBlockInner {
     pub memory_set: MemorySet,
     /// Parent process of the current process.
     /// Weak will not affect the reference count of the parent
-    pub parent: Option<Weak<TaskControlBlockInner>>,
+    pub parent: Option<Weak<TaskControlBlock>>,
     /// A vector containing TCBs of all child processes of the current process
     pub children: Vec<Arc<TaskControlBlock>>,
     /// It is set when active exit or execution error occurs
@@ -77,7 +77,7 @@ impl TaskControlBlockInner {
 impl TaskControlBlock {
     /// Create a new process
     /// At parent, it is only used for the creation of initproc
-    pub fn new(elf_data: &[u8], app_id: usize) -> Self {
+    pub fn new(elf_data: &[u8]) -> Self {
         // memory_set with elf program headers/trampone/trap context/user stack
         let (memory_set, user_sp, entry_point) = MemorySet::from_elf(elf_data);
         let trap_cx_ppn = memory_set
@@ -86,8 +86,8 @@ impl TaskControlBlock {
             .ppn();
         // alloc a pid and a kernel stack in kernel space 
         let pid_handle = pid_alloc();
-        let kernel_satck = kstack_alloc();
-        let kernel_stack_top = kernel_satck.get_top();
+        let kernel_stack = kstack_alloc();
+        let kernel_stack_top = kernel_stack.get_top();
         // push a task context which goes to trap_return to the top of kernel stack
         let task_control_block = Self {
             pid: pid_handle,
