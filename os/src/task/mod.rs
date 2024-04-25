@@ -16,6 +16,7 @@ pub use id::{kstack_alloc, pid_alloc, KernelStack, PidHandle};
 pub use manager::{add_task, fetch_task, TaskManager};
 pub use processor::{
     current_task, current_trap_cx, current_user_token, run_tasks, schedule, take_current_task,
+    ppn_by_vpn, current_task_info, update_syscall_times, task_mmap, task_munmap, 
     Processor,
 };
 

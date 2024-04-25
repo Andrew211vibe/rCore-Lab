@@ -3,10 +3,13 @@ use super::{kstack_alloc, pid_alloc, KernelStack, PidHandle};
 use crate::config::TRAP_CONTEXT_BASE;
 use crate::mm::{MemorySet, PhysPageNum, VirtAddr, KERNEL_SPACE};
 use crate::sync::UPSafeCell;
+use crate::timer::get_time_ms;
 use crate::trap::{trap_handler, TrapContext};
 use alloc::sync::{Arc, Weak};
 use alloc::vec::Vec;
 use core::cell::RefMut;
+
+use crate::config::MAX_SYSCALL_NUM;
 
 /// The task control block (TCB) of a task
 /// Directly save the contents that will not change during running
@@ -55,6 +58,12 @@ pub struct TaskControlBlockInner {
     pub heap_bottom: usize,
     /// Program break
     pub program_brk: usize,
+
+    /// The number of syscall called by task
+    pub syscall_times: [u32; MAX_SYSCALL_NUM],
+    /// start time of task
+    pub start_time: usize,
+
 }
 
 impl TaskControlBlockInner {
@@ -104,6 +113,8 @@ impl TaskControlBlock {
                     exit_code: 0,
                     heap_bottom: user_sp,
                     program_brk: user_sp,
+                    syscall_times: [0; MAX_SYSCALL_NUM],
+                    start_time: get_time_ms(),
                 })
             },
         };
@@ -177,6 +188,8 @@ impl TaskControlBlock {
                     exit_code: 0,
                     heap_bottom: parent_inner.heap_bottom,
                     program_brk: parent_inner.program_brk,
+                    syscall_times: [0; MAX_SYSCALL_NUM],
+                    start_time: get_time_ms(),
                 })
             },
         });
