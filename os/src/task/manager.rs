@@ -17,31 +17,11 @@ impl TaskManager {
     }
     /// Add process back to ready queue
     pub fn add(&mut self, task: Arc<TaskControlBlock>) {
-        let pass = task.inner_exclusive_access().pass;
-        let len = self.ready_queue.len();
-        for idx in 0..len {
-            let tmp = self
-                .ready_queue
-                .get(idx)
-                .unwrap();
-            let val = tmp
-                .inner_exclusive_access()
-                .pass;
-            if pass < val {
-                // println!("new task pass: {}, inserted before idx {}", pass, idx);
-                self.ready_queue.insert(idx, task);
-                return;
-            }
-        }
         self.ready_queue.push_back(task);
     }
     /// Take a process out of the ready queue
     pub fn fetch(&mut self) -> Option<Arc<TaskControlBlock>> {
-        let mut target = self.ready_queue.pop_front();
-        if let Some(ref mut tcb) = target {
-            tcb.inner_exclusive_access().update_stride();
-        }
-        target
+        self.ready_queue.pop_front()
     }
 }
 

@@ -54,10 +54,10 @@ _app_names:
     .string "ch2b_bad_instruction"
     .string "ch2b_bad_register"
     .string "ch2b_hello_world"
-    .string "ch2b_power3"
-    .string "ch2b_power5"
-    .string "ch2b_power7"
-    .string "ch3_sleep0"
+    .string "ch2b_power_3"
+    .string "ch2b_power_5"
+    .string "ch2b_power_7"
+    .string "ch3_sleep"
     .string "ch3_sleep1"
     .string "ch3_taskinfo"
     .string "ch3b_yield0"
@@ -130,7 +130,7 @@ app_3_end:
     .global app_4_end
     .align 3
 app_4_start:
-    .incbin "../user/build/elf/ch2b_power3.elf"
+    .incbin "../user/build/elf/ch2b_power_3.elf"
 app_4_end:
 
     .section .data
@@ -138,7 +138,7 @@ app_4_end:
     .global app_5_end
     .align 3
 app_5_start:
-    .incbin "../user/build/elf/ch2b_power5.elf"
+    .incbin "../user/build/elf/ch2b_power_5.elf"
 app_5_end:
 
     .section .data
@@ -146,7 +146,7 @@ app_5_end:
     .global app_6_end
     .align 3
 app_6_start:
-    .incbin "../user/build/elf/ch2b_power7.elf"
+    .incbin "../user/build/elf/ch2b_power_7.elf"
 app_6_end:
 
     .section .data
@@ -154,7 +154,7 @@ app_6_end:
     .global app_7_end
     .align 3
 app_7_start:
-    .incbin "../user/build/elf/ch3_sleep0.elf"
+    .incbin "../user/build/elf/ch3_sleep.elf"
 app_7_end:
 
     .section .data
