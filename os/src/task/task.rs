@@ -76,7 +76,7 @@ impl TaskControlBlockInner {
 
 impl TaskControlBlock {
     /// Create a new process
-    /// At parent, it is only used for the creation of initproc
+    /// At present, it is only used for the creation of initproc
     pub fn new(elf_data: &[u8]) -> Self {
         // memory_set with elf program headers/trampone/trap context/user stack
         let (memory_set, user_sp, entry_point) = MemorySet::from_elf(elf_data);
@@ -114,7 +114,7 @@ impl TaskControlBlock {
             user_sp, 
             KERNEL_SPACE.exclusive_access().token(), 
             kernel_stack_top, 
-            trap_handler as usize
+            trap_handler as usize,
         );
         task_control_block
     }
@@ -144,7 +144,7 @@ impl TaskControlBlock {
             KERNEL_SPACE.exclusive_access().token(), 
             self.kernel_stack.get_top(), 
             trap_handler as usize,
-        )
+        );
         // **** release inner automatically
     }
 
@@ -198,7 +198,7 @@ impl TaskControlBlock {
     }
 
     /// change the location of the program break. return None if failed
-    pub fn change_program_brk(&mut self, size: i32) -> Option<usize> {
+    pub fn change_program_brk(&self, size: i32) -> Option<usize> {
         let mut inner = self.inner_exclusive_access();
         let heap_bottom = inner.heap_bottom;
         let old_break = inner.program_brk;

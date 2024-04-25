@@ -95,7 +95,7 @@ impl KernelStack {
     #[allow(unused)]
     pub fn push_on_top<T>(&self, value: T) -> *mut T
     where
-        T: Sized
+        T: Sized,
     {
         let kernel_stack_top = self.get_top();
         let ptr_mut = (kernel_stack_top - core::mem::size_of::<T>()) as *mut T;
