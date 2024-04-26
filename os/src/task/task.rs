@@ -203,8 +203,8 @@ impl TaskControlBlock {
                     program_brk: parent_inner.program_brk,
                     syscall_times: [0; MAX_SYSCALL_NUM],
                     start_time: get_time_ms(),
-                    priority: 16,
-                    pass: BIG_STRIDE / 16,
+                    priority: parent_inner.priority,
+                    pass: parent_inner.pass,
                     stride: 0,
                 })
             },
@@ -254,8 +254,8 @@ impl TaskControlBlock {
                     program_brk: parent_inner.program_brk,
                     syscall_times: [0; MAX_SYSCALL_NUM],
                     start_time: get_time_ms(),
-                    priority: 16,
-                    pass: BIG_STRIDE / 16,
+                    priority: parent_inner.priority,
+                    pass: parent_inner.pass,
                     stride: 0,
                 })
             },
