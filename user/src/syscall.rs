@@ -38,11 +38,11 @@ pub fn syscall6(id: usize, args: [usize; 6]) -> isize {
         core::arch::asm!(
             "ecall",
             inlateout("x10") args[0] => ret,
-            in("x11") args[1]
-            in("x12") args[2]
-            in("x13") args[3]
-            in("x14") args[4]
-            in("x15") args[5]
+            in("x11") args[1],
+            in("x12") args[2],
+            in("x13") args[3],
+            in("x14") args[4],
+            in("x15") args[5],
             in("x17") id
         );
     }
