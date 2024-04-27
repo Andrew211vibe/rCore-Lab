@@ -15,8 +15,9 @@ use log::*;
 #[macro_use]
 mod console;
 pub mod config;
+pub mod drivers;
+pub mod fs;
 pub mod lang_items;
-mod loader;
 pub mod logging;
 pub mod mm;
 pub mod sbi;
@@ -93,12 +94,11 @@ pub fn rust_main() -> ! {
     kernel_log_info();
     mm::init();
     mm::remap_test();
-    task::add_initproc();
-    println!("after initproc!");
     trap::init();
     trap::enable_timer_interrupt();
     timer::set_next_trigger();
-    loader::list_apps();
+    fs::list_apps();
+    task::add_initproc();
     task::run_tasks();
     panic!("Unreachable in rust_main!");
 }
