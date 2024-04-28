@@ -1,12 +1,14 @@
 use super::TaskContext;
 use super::{kstack_alloc, pid_alloc, KernelStack, PidHandle};
 use crate::config::{TRAP_CONTEXT_BASE, MAX_SYSCALL_NUM, BIG_STRIDE};
+use crate::fs::{File, Stdin, Stdout};
 use crate::mm::{MemorySet, PhysPageNum, VirtAddr, KERNEL_SPACE};
 use crate::sync::UPSafeCell;
 use crate::timer::get_time_ms;
 use crate::trap::{trap_handler, TrapContext};
 use alloc::sync::{Arc, Weak};
 use alloc::vec::Vec;
+use alloc::vec;
 use core::cell::RefMut;
 
 /// The task control block (TCB) of a task

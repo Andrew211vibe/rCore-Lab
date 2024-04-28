@@ -43,7 +43,7 @@ impl BlockCache {
         unsafe { &*(addr as *const T) }
     }
 
-    pub fn get_mut<T>(&self, offset: usize) -> &mut T
+    pub fn get_mut<T>(&mut self, offset: usize) -> &mut T
     where
         T: Sized,
     {
@@ -58,7 +58,7 @@ impl BlockCache {
         f(self.get_ref(offset))
     }
 
-    pub fn modify<T, V>(&mut self, offset: usize, f: impl FnOnce(&T) -> V) -> V {
+    pub fn modify<T, V>(&mut self, offset: usize, f: impl FnOnce(&mut T) -> V) -> V {
         f(self.get_mut(offset))
     }
 
@@ -141,7 +141,7 @@ pub fn get_block_cache(
 /// Sync all block cache to block device
 pub fn block_cache_sync_all() {
     let manager = BLOCK_CACHE_MANAGER.lock();
-    for (_, caache) in manager.queue.iter() {
+    for (_, cache) in manager.queue.iter() {
         cache.lock().sync();
     }
 }

@@ -1,4 +1,4 @@
-use::super::File;
+use super::File;
 use crate::drivers::BLOCK_DEVICE;
 use crate::mm::UserBuffer;
 use crate::sync::UPSafeCell;
@@ -51,7 +51,7 @@ impl OSInode {
 
 lazy_static! {
     pub static ref ROOT_INODE: Arc<Inode> = {
-        let efs = EasyFileSystem::opne(BLOCK_DEVICE.clone());
+        let efs = EasyFileSystem::open(BLOCK_DEVICE.clone());
         Arc::new(EasyFileSystem::root_inode(&efs))
     };
 }

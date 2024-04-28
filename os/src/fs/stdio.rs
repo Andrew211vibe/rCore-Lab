@@ -6,7 +6,7 @@ use crate::task::suspend_current_and_run_next;
 /// stdin file for getting chars from console
 pub struct Stdin;
 /// stdout file for putting chars to console
-pub struct Stdin;
+pub struct Stdout;
 
 impl File for Stdin {
     fn readable(&self) -> bool {

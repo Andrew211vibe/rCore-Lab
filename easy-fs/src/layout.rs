@@ -215,13 +215,13 @@ impl DiskInode {
         // alloc low-level indirect1
         get_block_cache(self.indirect2 as usize, Arc::clone(block_device))
             .lock()
-            .modify(0, |indirect2: &IndirectBlock| {
+            .modify(0, |indirect2: &mut IndirectBlock| {
                 while (a0 < a1) || (a0 == a1 && b0 < b1) {
                     if b0 == 0 {
                         indirect2[a0] = new_blocks.next().unwrap();
                     }
                     // fill current
-                    get_block_cache(indirect2[a0], Arc::clone(block_device))
+                    get_block_cache(indirect2[a0] as usize, Arc::clone(block_device))
                         .lock()
                         .modify(0, |indirect1: &mut IndirectBlock| {
                             indirect1[b0] = new_blocks.next().unwrap();

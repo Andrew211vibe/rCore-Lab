@@ -1,4 +1,4 @@
-use super::{BlockDevice, BLOCK_DEVICE};
+use super::BlockDevice;
 use crate::mm::{
     frame_alloc, frame_dealloc, kernel_token, FrameTracker, PageTable, PhysAddr, PhysPageNum,
     StepByOne, VirtAddr,
@@ -6,13 +6,12 @@ use crate::mm::{
 use crate::sync::UPSafeCell;
 use alloc::vec::Vec;
 use lazy_static::*;
-use riscv::addr;
 use virtio_drivers::{Hal, VirtIOBlk, VirtIOHeader};
 
 /// The base address of control registers in Virtio_Block device
 #[allow(unused)]
 const VIRTIO0: usize = 0x10001000;
-/// VirtIOBlock device driver structure for virtio_blk device
+/// VirtIOBlock device driver strcuture for virtio_blk device
 pub struct VirtIOBlock(UPSafeCell<VirtIOBlk<'static, VirtioHal>>);
 
 lazy_static! {
@@ -49,7 +48,7 @@ impl VirtIOBlock {
 pub struct VirtioHal;
 
 impl Hal for VirtioHal {
-    fn dma_alloc(pages: usize) -> virtio_drivers::PhysAddr {
+    fn dma_alloc(pages: usize) -> usize {
         let mut ppn_base = PhysPageNum(0);
         for i in 0..pages {
             let frame = frame_alloc().unwrap();
@@ -63,7 +62,7 @@ impl Hal for VirtioHal {
         pa.0
     }
 
-    fn dma_dealloc(paddr: usize, pages: usize) -> i32 {
+    fn dma_dealloc(pa: usize, pages: usize) -> i32 {
         let pa = PhysAddr::from(pa);
         let mut ppn_base: PhysPageNum = pa.into();
         for _ in 0..pages {
@@ -79,8 +78,8 @@ impl Hal for VirtioHal {
 
     fn virt_to_phys(vaddr: usize) -> usize {
         PageTable::from_token(kernel_token())
-        .translate_va(VirtAddr::from(vaddr))
-        .unwrap()
-        .0
+            .translate_va(VirtAddr::from(vaddr))
+            .unwrap()
+            .0
     }
 }

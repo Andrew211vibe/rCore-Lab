@@ -1,9 +1,18 @@
 use alloc::sync::Arc;
 
 use crate::{
-    config::MAX_SYSCALL_NUM, fs::{open_file, File, OpenFlags}, loader::get_app_data_by_name, mm::{translated_refmut, translated_str, PhysAddr, VirtAddr}, task::{
-        add_task, current_task, current_task_info, current_user_token, exit_current_and_run_next, ppn_by_vpn, suspend_current_and_run_next, task_mmap, task_munmap, TaskStatus
-    }, timer::get_time_us
+    config::MAX_SYSCALL_NUM, 
+    fs::{open_file, OpenFlags},
+    mm::{
+        translated_refmut, translated_str,
+        VirtAddr, PhysAddr
+    },
+    task::{
+        add_task, current_task, current_task_info, current_user_token, exit_current_and_run_next, ppn_by_vpn, 
+        suspend_current_and_run_next, task_mmap, task_munmap, 
+        TaskStatus
+    }, 
+    timer::get_time_us,
 };
 
 #[repr(C)]
@@ -202,7 +211,7 @@ pub fn sys_spawn(_path: *const u8) -> isize {
     let path = translated_str(token, _path);
     if let Some(app_inode) = open_file(path.as_str(), OpenFlags::RDONLY) {
         let all_data = app_inode.read_all();
-        let new_task = current_task.spawn(all_data.as_slice());
+        let new_task = current_task().unwrap().spawn(all_data.as_slice());
         let new_pid = new_task.getpid();
         let trap_cx = new_task.inner_exclusive_access().get_trap_cx();
         trap_cx.x[10] = 0;

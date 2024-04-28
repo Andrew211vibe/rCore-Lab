@@ -6,7 +6,7 @@ mod switch;
 #[allow(clippy::module_inception)]
 mod task;
 
-use crate::{fs::{open_file, OpenFlags}, loader::get_app_data_by_name};
+use crate::fs::{open_file, OpenFlags};
 use alloc::sync::Arc;
 use lazy_static::*;
 use switch::__switch;
@@ -91,11 +91,11 @@ lazy_static! {
     /// 
     /// the name "initproc" may be changed to any other app name like "usertests"
     /// bu we have user_shell, so we don't need to change it
-    pub static ref INITPROC: Arc<TaskControlBlock> = Arc::new(TaskControlBlock::new(
+    pub static ref INITPROC: Arc<TaskControlBlock> = Arc::new({
         let inode = open_file("ch6b_initproc", OpenFlags::RDONLY).unwrap();
         let v = inode.read_all();
-        TaskControlBlock::new(v.as_slice());
-    ));
+        TaskControlBlock::new(v.as_slice())
+    });
 }
 
 /// Add init process to the manager

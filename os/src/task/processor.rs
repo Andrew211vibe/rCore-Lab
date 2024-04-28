@@ -110,7 +110,7 @@ impl Processor {
             }
         }
 
-        inner.memory_set.delete_framed_area(vpn_range);
+        inner.memory_set.remove_area_with_start_vpn(vpn_range.get_start());
         0
     }
 }
