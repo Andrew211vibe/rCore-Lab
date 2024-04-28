@@ -6,7 +6,7 @@ mod switch;
 #[allow(clippy::module_inception)]
 mod task;
 
-use crate::loader::get_app_data_by_name;
+use crate::{fs::{open_file, OpenFlags}, loader::get_app_data_by_name};
 use alloc::sync::Arc;
 use lazy_static::*;
 use switch::__switch;
@@ -92,7 +92,9 @@ lazy_static! {
     /// the name "initproc" may be changed to any other app name like "usertests"
     /// bu we have user_shell, so we don't need to change it
     pub static ref INITPROC: Arc<TaskControlBlock> = Arc::new(TaskControlBlock::new(
-        get_app_data_by_name("ch5b_initproc").unwrap()
+        let inode = open_file("ch6b_initproc", OpenFlags::RDONLY).unwrap();
+        let v = inode.read_all();
+        TaskControlBlock::new(v.as_slice());
     ));
 }
 

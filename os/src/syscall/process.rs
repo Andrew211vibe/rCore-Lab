@@ -1,15 +1,9 @@
 use alloc::sync::Arc;
 
 use crate::{
-    config::MAX_SYSCALL_NUM, 
-    loader::get_app_data_by_name,
-    mm::{translated_refmut, translated_str, PhysAddr, VirtAddr},
-    task::{
-        add_task, current_task, current_user_token, exit_current_and_run_next, suspend_current_and_run_next, 
-        ppn_by_vpn, current_task_info, task_mmap, task_munmap, 
-        TaskStatus,
-    },
-    timer::get_time_us,
+    config::MAX_SYSCALL_NUM, fs::{open_file, File, OpenFlags}, loader::get_app_data_by_name, mm::{translated_refmut, translated_str, PhysAddr, VirtAddr}, task::{
+        add_task, current_task, current_task_info, current_user_token, exit_current_and_run_next, ppn_by_vpn, suspend_current_and_run_next, task_mmap, task_munmap, TaskStatus
+    }, timer::get_time_us
 };
 
 #[repr(C)]
@@ -30,28 +24,6 @@ pub struct TaskInfo {
     /// Total running time of task
     pub time: usize,
 }
-
-// impl TaskInfo {
-//     pub fn new() -> Self {
-//         TaskInfo {
-//             status: TaskStatus::UnInit,
-//             syscall_times: [0; MAX_SYSCALL_NUM],
-//             time: get_time_ms(),
-//         }
-//     }
-
-//     pub fn new_with_status(status: TaskStatus) -> Self {
-//         TaskInfo {
-//             status,
-//             syscall_times: [0; MAX_SYSCALL_NUM],
-//             time: get_time_ms(),
-//         }
-//     }
-
-//     pub fn update_syscall_times(&mut self, syscall_id: usize) {
-//         self.syscall_times[syscall_id] += 1;
-//     }
-// }
 
 fn va_to_pa(va: VirtAddr) -> Option<PhysAddr> {
     let offset = va.page_offset();
@@ -103,9 +75,10 @@ pub fn sys_exec(path: *const u8) -> isize {
     trace!("kernel::pid[{}] sys_exec", current_task().unwrap().pid.0);
     let token = current_user_token();
     let path = translated_str(token, path);
-    if let Some(data) = get_app_data_by_name(path.as_str()) {
+    if let Some(app_inode) = open_file(path.as_str(), OpenFlags::RDONLY) {
+        let all_data = app_inode.read_all();
         let task = current_task().unwrap();
-        task.exec(data);
+        task.exec(all_data.as_slice());
         0
     } else {
         -1
@@ -227,9 +200,9 @@ pub fn sys_spawn(_path: *const u8) -> isize {
     );
     let token = current_user_token();
     let path = translated_str(token, _path);
-    if let Some(data) = get_app_data_by_name(path.as_str()) {
-        let current_task = current_task().unwrap();
-        let new_task = current_task.spawn(data);
+    if let Some(app_inode) = open_file(path.as_str(), OpenFlags::RDONLY) {
+        let all_data = app_inode.read_all();
+        let new_task = current_task.spawn(all_data.as_slice());
         let new_pid = new_task.getpid();
         let trap_cx = new_task.inner_exclusive_access().get_trap_cx();
         trap_cx.x[10] = 0;
