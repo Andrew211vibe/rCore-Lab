@@ -3,7 +3,6 @@ use alloc::collections::VecDeque;
 use alloc::sync::Arc;
 use lazy_static::*;
 use spin::Mutex;
-
 /// Cached block inside memory
 pub struct BlockCache {
     /// cached block data
@@ -19,7 +18,7 @@ pub struct BlockCache {
 impl BlockCache {
     /// Load a new BlockCache from disk.
     pub fn new(block_id: usize, block_device: Arc<dyn BlockDevice>) -> Self {
-        let mut cache = [0_u8; BLOCK_SZ];
+        let mut cache = [0u8; BLOCK_SZ];
         block_device.read_block(block_id, &mut cache);
         Self {
             cache,
@@ -75,7 +74,6 @@ impl Drop for BlockCache {
         self.sync()
     }
 }
-
 /// Use a block cache of 16 blocks
 const BLOCK_CACHE_SIZE: usize = 16;
 
@@ -98,7 +96,7 @@ impl BlockCacheManager {
         if let Some(pair) = self.queue.iter().find(|pair| pair.0 == block_id) {
             Arc::clone(&pair.1)
         } else {
-            // subsititute
+            // substitute
             if self.queue.len() == BLOCK_CACHE_SIZE {
                 // from front to tail
                 if let Some((idx, _)) = self
@@ -112,6 +110,7 @@ impl BlockCacheManager {
                     panic!("Run out of BlockCache!");
                 }
             }
+            // load block into mem and push back
             let block_cache = Arc::new(Mutex::new(BlockCache::new(
                 block_id,
                 Arc::clone(&block_device),
@@ -124,10 +123,9 @@ impl BlockCacheManager {
 
 lazy_static! {
     /// The global block cache manager
-    pub static ref BLOCK_CACHE_MANAGER: Mutex<BlockCacheManager> = 
+    pub static ref BLOCK_CACHE_MANAGER: Mutex<BlockCacheManager> =
         Mutex::new(BlockCacheManager::new());
 }
-
 /// Get the block cache corresponding to the given block id and block device
 pub fn get_block_cache(
     block_id: usize,
@@ -137,7 +135,6 @@ pub fn get_block_cache(
         .lock()
         .get_block_cache(block_id, block_device)
 }
-
 /// Sync all block cache to block device
 pub fn block_cache_sync_all() {
     let manager = BLOCK_CACHE_MANAGER.lock();

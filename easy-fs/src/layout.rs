@@ -91,7 +91,7 @@ pub struct DiskInode {
 
 impl DiskInode {
     /// Initialize a disk inode, as well as all direct inodes under it
-    /// indirect1 andindirect2 block are allocated only when they are needed
+    /// indirect1 and indirect2 block are allocated only when they are needed
     pub fn initialize(&mut self, type_: DiskInodeType) {
         self.size = 0;
         self.direct.iter_mut().for_each(|v| *v = 0);
@@ -423,7 +423,7 @@ impl DirEntry {
     pub fn as_bytes_mut(&mut self) -> &mut [u8] {
         unsafe { core::slice::from_raw_parts_mut(self as *mut _ as usize as *mut u8, DIRENT_SZ) }
     }
-    /// Get name of the director
+    /// Get name of the entry
     pub fn name(&self) -> &str {
         let len = (0_usize..).find(|i| self.name[*i] == 0).unwrap();
         core::str::from_utf8(&self.name[..len]).unwrap()
