@@ -3,7 +3,7 @@ use super::{PTEFlags, PageTable, PageTableEntry};
 use super::{PhysAddr, PhysPageNum, VirtAddr, VirtPageNum};
 use super::{StepByOne, VPNRange};
 use crate::config::{
-    KERNEL_STACK_SIZE, MEMORY_END, PAGE_SIZE, TRAMPOLINE, TRAP_CONTEXT_BASE, USER_STACK_SIZE,
+    MMIO, MEMORY_END, PAGE_SIZE, TRAMPOLINE, TRAP_CONTEXT_BASE, USER_STACK_SIZE,
 };
 use crate::sync::UPSafeCell;
 use alloc::collections::BTreeMap;
@@ -154,6 +154,11 @@ bitflags! {
     }
 }
 
+/// the kernel token
+pub fn kernel_token() -> usize {
+    KERNEL_SPACE.exclusive_access().token()
+}
+
 /// address space
 pub struct MemorySet {
     page_table: PageTable,
@@ -205,23 +210,6 @@ impl MemorySet {
         }
         self.areas.push(map_area);
     }
-
-    pub fn delete_framed_area(
-        &mut self,
-        range: VPNRange,
-    ) {
-        let mut idx = 0;
-        for area in self.areas.iter_mut() {
-            idx += 1;
-            if area.vpn_range.get_start().0 == range.get_start().0
-            && area.vpn_range.get_end().0 == range.get_end().0 {
-                area.unmap(&mut self.page_table);
-                self.areas.remove(idx);
-                break;
-            }
-        }
-    }
-
     /// Mention that tranpoline is not collected by areas
     fn map_trampoline(&mut self) {
         self.page_table.map(
@@ -285,6 +273,18 @@ impl MemorySet {
                 MapPermission::R | MapPermission::W,
             ), None,
         );
+        info!("mapping memory-mapped registers");
+        for pair in MMIO {
+            memory_set.push(
+                MapArea::new(
+                    (*pair).0.into(), 
+                    ((*pair).0 + (*pair).1).into(), 
+                    MapType::Identical, 
+                    MapPermission::R | MapPermission::W,
+                ),
+                None,
+            );
+        }
         memory_set
     }
     /// Include sections in elf and trampoline and TrapContext and user stack,
@@ -426,13 +426,6 @@ impl MemorySet {
         }
     }
 }
-
-/// Return (bottom, top) of a kernel stack in kernel space.
-// pub fn kernel_stack_position(app_id: usize) -> (usize, usize) {
-//     let top = TRAMPOLINE - app_id * (KERNEL_STACK_SIZE + PAGE_SIZE);
-//     let bottom = top - KERNEL_STACK_SIZE;
-//     (bottom, top)
-// }
 
 /// remap test in kernel space
 #[allow(unused)]

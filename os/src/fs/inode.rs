@@ -124,7 +124,7 @@ impl File for OSInode {
     fn writeable(&self) -> bool {
         self.writeable
     }
-    fn read(&self, buf: UserBuffer) -> usize {
+    fn read(&self, mut buf: UserBuffer) -> usize {
         let mut inner = self.inner.exclusive_access();
         let mut total_read_size = 0_usize;
         for slice in buf.buffers.iter_mut() {
