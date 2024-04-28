@@ -17,6 +17,9 @@ pub const SYSCALL_EXEC: usize = 221;
 pub const SYSCALL_WAITPID: usize = 260;
 pub const SYSCALL_SET_PRIORITY: usize = 140;
 pub const SYSCALL_SPAWN: usize = 400;
+pub const SYSCALL_UNLINKAT: usize = 35;
+pub const SYSCALL_LINKAT: usize = 37;
+pub const SYSCALL_FSTAT: usize = 80;
 
 pub fn syscall(id: usize, args: [usize; 3]) -> isize {
     let mut ret: isize;
@@ -164,4 +167,32 @@ pub fn sys_set_priority(prio: isize) -> isize {
 
 pub fn sys_spawn(path: &str) -> isize {
     syscall(SYSCALL_SPAWN, [path.as_ptr() as usize, 0, 0])
+}
+
+pub fn sys_linkat(
+    old_dirfd: usize,
+    old_path: &str,
+    new_dirfd: usize,
+    new_path: &str,
+    flags: usize,
+) -> isize {
+    syscall6(
+        SYSCALL_LINKAT,
+        [
+            old_dirfd,
+            old_path.as_ptr() as usize,
+            new_dirfd,
+            new_path.as_ptr() as usize,
+            flags,
+            0,
+        ],
+    )
+}
+
+pub fn sys_unlinkat(dirfd: usize, path: &str, flags: usize) -> isize {
+    syscall(SYSCALL_UNLINKAT, [dirfd, path.as_ptr() as usize, flags])
+}
+
+pub fn sys_fstat(fd: usize, st: &mut Stat) -> isize {
+    syscall(SYSCALL_FSTAT, [fd, st as *const _ as usize, 0])
 }

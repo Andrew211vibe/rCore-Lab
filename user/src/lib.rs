@@ -278,6 +278,18 @@ pub fn spawn(path: &str) -> isize {
     sys_spawn(path)
 }
 
+pub fn link(old_path: &str, new_path: &str) -> isize {
+    sys_linkat(AT_FDCWD as usize, old_path, AT_FDCWD as usize, new_path, 0)
+}
+
+pub fn unlink(path: &str) -> isize {
+    sys_unlinkat(AT_FDCWD as usize, path, 0)
+}
+
+pub fn fstat(fd: usize, st: &mut Stat) -> isize {
+    sys_fstat(fd, st)
+}
+
 bitflags! {
     pub struct SignalFlags: i32 {
         const SIGDEF = 1; // Default signal handling
