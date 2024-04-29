@@ -1,5 +1,5 @@
-use crate::mm::{translated_byte_buffer, translated_str, UserBuffer};
-use crate::fs::{open_file, OpenFlags, Stat};
+use crate::mm::{translated_byte_buffer, translated_str, UserBuffer, VirtAddr};
+use crate::fs::{linkat, open_file, unlinkat, OpenFlags, Stat};
 use crate::task::{current_task, current_user_token};
 
 pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
@@ -80,7 +80,29 @@ pub fn sys_fstat(_fd: usize, _st: *mut Stat) -> isize {
         "kernel:pid[{}] sys_fstat NOT IMPLEMENTED",
         current_task().unwrap().pid.0
     );
-    -1
+    let task = current_task().unwrap();
+    let inner = task.inner_exclusive_access();
+    if _fd >= inner.fd_table.len() {
+        return -1;
+    }
+    if let Some(inode) = &inner.fd_table[_fd] {
+        let (ino, mode, nlink) = inode.fstat();
+        drop(inner);
+        let st = super::va_to_pa(VirtAddr::from(_st as usize));
+        if let Some(pa) = st {
+            let st = pa.0 as *mut Stat;
+            unsafe {
+                (*st).ino = ino;
+                (*st).mode = mode;
+                (*st).nlink = nlink;
+            }
+            0
+        } else {
+            -1
+        }
+    } else {
+        -1
+    }
 }
 
 /// YOUR JOB: Implement linkat.
@@ -89,7 +111,16 @@ pub fn sys_linkat(_old_name: *const u8, _new_name: *const u8) -> isize {
         "kernel:pid[{}] sys_linkat NOT IMPLEMENTED",
         current_task().unwrap().pid.0
     );
-    -1
+    let old_name = super::va_to_pa(VirtAddr::from(_old_name as usize));
+    let new_name = super::va_to_pa(VirtAddr::from(_new_name as usize));
+    if let (Some(old), Some(new)) = (old_name, new_name) {
+        let old_name = old.0 as *const u8;
+        let new_name = new.0 as *const u8;
+        linkat(old_name, new_name)
+    } else {
+        error!("sys_linkat() failed");
+        -1
+    }
 }
 
 /// YOUR JOB: Implement unlinkat.
@@ -98,5 +129,12 @@ pub fn sys_unlinkat(_name: *const u8) -> isize {
         "kernel:pid[{}] sys_unlinkat NOT IMPLEMENTED",
         current_task().unwrap().pid.0
     );
-    -1
+    let name = super::va_to_pa(VirtAddr::from(_name as usize));
+    if let Some(n) = name {
+        let name = n.0 as *const u8;
+        unlinkat(name)
+    } else {
+        error!("sys_unlinkat() failed");
+        -1
+    }
 }

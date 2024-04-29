@@ -28,6 +28,16 @@ const SYSCALL_WAITPID: usize = 260;
 const SYSCALL_SPAWN: usize = 400;
 /// getpid syscall
 const SYSCALL_GETPID: usize = 172;
+/// unlinkat syscall
+const SYSCALL_UNLINKAT: usize = 35;
+/// linkat syscall
+const SYSCALL_LINKAT: usize = 37;
+/// open syscall
+const SYSCALL_OPEN: usize = 56;
+/// close syscall
+const SYSCALL_CLOSE: usize = 57;
+/// fstat syscall
+const SYSCALL_FSTAT: usize = 80;
 
 mod fs;
 pub mod process;
@@ -36,9 +46,10 @@ use fs::*;
 use process::*;
 
 use crate::task::update_syscall_times;
+use crate::fs::Stat;
 
 /// handle syscall exception with `syscall_id` and other arguments
-pub fn syscall(syscall_id: usize, args: [usize; 3]) -> isize {
+pub fn syscall(syscall_id: usize, args: [usize; 4]) -> isize {
     match syscall_id {
         SYSCALL_READ => {
             update_syscall_times(syscall_id);
@@ -99,6 +110,26 @@ pub fn syscall(syscall_id: usize, args: [usize; 3]) -> isize {
         SYSCALL_EXEC => {
             update_syscall_times(syscall_id);
             sys_exec(args[0] as *const u8)
+        },
+        SYSCALL_OPEN => {
+            update_syscall_times(syscall_id);
+            sys_open(args[1] as *const u8, args[2] as u32)
+        },
+        SYSCALL_CLOSE => {
+            update_syscall_times(syscall_id);
+            sys_close(args[0])
+        },
+        SYSCALL_LINKAT => {
+            update_syscall_times(syscall_id);
+            sys_linkat(args[1] as *const u8, args[3] as *const u8)
+        },
+        SYSCALL_UNLINKAT => { 
+            update_syscall_times(syscall_id);
+            sys_unlinkat(args[1] as *const u8)
+        },
+        SYSCALL_FSTAT => {
+            update_syscall_times(syscall_id);
+            sys_fstat(args[0], args[1] as *mut Stat)
         },
         _ => panic!("Unsupported syscall_id: {}", syscall_id),
     }

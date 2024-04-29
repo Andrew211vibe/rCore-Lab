@@ -34,7 +34,7 @@ pub struct TaskInfo {
     pub time: usize,
 }
 
-fn va_to_pa(va: VirtAddr) -> Option<PhysAddr> {
+pub fn va_to_pa(va: VirtAddr) -> Option<PhysAddr> {
     let offset = va.page_offset();
     let ppn = ppn_by_vpn(va.floor());
     match ppn {

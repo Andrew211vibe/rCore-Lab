@@ -86,7 +86,7 @@ pub struct DiskInode {
     pub direct: [u32; INODE_DIRECT_COUNT],
     pub indirect1: u32,
     pub indirect2: u32,
-    type_: DiskInodeType,
+    pub type_: DiskInodeType,
 }
 
 impl DiskInode {
@@ -386,6 +386,13 @@ impl DiskInode {
             start = end_current_block;
         }
         write_size
+    }
+
+    pub fn get_type(&self) -> u32 {
+        match self.type_ {
+            DiskInodeType::Directory => 0o040000,
+            DiskInodeType::File => 0o100000,
+        }
     }
 }
 
